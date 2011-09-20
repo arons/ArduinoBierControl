@@ -1,1 +1,1 @@
-Simple cotroller to brew the beer at the correct temperature using an Arduino board, a temperature sensor and a relay to power on and off the electric cooker.
+Simple controller to brew the beer at the correct temperature using an Arduino board, a temperature sensor and a relay to power on and off the electric cooker.

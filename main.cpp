@@ -35,7 +35,21 @@ float R0 = 10000;
 float T0 = 298.15; //Kelvin = 25 Celsius
 
 #define relePin 13
-float targetTemp = 85;
+
+
+
+
+
+void setup() {
+	// set up the LCD's number of columns and rows:
+	lcd.begin(16, 2);
+	pinMode(relePin, OUTPUT);
+	Serial.begin(115200);
+}
+
+
+
+
 
 float TempAnalogic;
 void Thermistor_B_Print(int RawADC) {
@@ -49,21 +63,8 @@ void Thermistor_B_Print(int RawADC) {
 	// Uncomment this line for the function to return Fahrenheit instead.
 	//temp = (Temp * 9.0)/ 5.0 + 32.0;                  // Convert to Fahrenheit
 
-//  lcd.setCursor(0, 0);
-//  lcd.print("RawADC:");
-//  lcd.print(RawADC);
-
-//  lcd.print(" Vx:");
-//  lcd.print(Vx);
-
-	//lcd.setCursor(0, 0);
-//	lcd.print("ohm:");
-//	lcd.print(Resistance);
-
-	//lcd.print(" temp:");
-	//lcd.print(TempAnalogic);
-
 }
+
 
 int Tc_100;
 void Digital_B_Print(void) {
@@ -76,16 +77,11 @@ void Digital_B_Print(void) {
 
 	ds.reset_search();
 	if (!ds.search(addr)) {
-
-		//lcd.setCursor(0, 1);
-		//lcd.print("No more addresses.");
 		Tc_100 = 0;
 		return;
 	}
 
 	if (OneWire::crc8(addr, 7) != addr[7]) {
-		//lcd.setCursor(0, 1);
-		//lcd.print("CRC is not valid!");
 		Tc_100 = 0;
 		return;
 	}
@@ -102,9 +98,6 @@ void Digital_B_Print(void) {
 	 }
 	 */
 	if (addr[0] != 0x28) {
-
-		//lcd.setCursor(0, 1);
-		//lcd.print("Device is not a DS18B20 family device.");
 		Tc_100 = 0;
 		return;
 	}
@@ -138,6 +131,9 @@ void Digital_B_Print(void) {
 
 }
 
+
+
+
 void printLCD() {
 	int Whole, Fract;
 
@@ -166,35 +162,39 @@ void printLCD() {
 
 }
 
+
+
+double targetTemp = 75.0;
+double target_delta = 0.5;
+double time_mult = 100;
+
 void releCommand() {
-	int Whole;
+	double delta;
 	lcd.setCursor(0, 1);
 	lcd.print("target:");
 	lcd.print(targetTemp);
+
+	delta = targetTemp - (Tc_100 / 100.0);
+
+
 	lcd.print(" rele:");
-
-	Whole = Tc_100 / 100;
-
-	if (Whole >= targetTemp) {
-		digitalWrite(relePin, HIGH);
-		lcd.print("OFF");
-	} else {
-		lcd.print("ON ");
+	if (delta > target_delta) {
+		lcd.print(delta);
 		digitalWrite(relePin, LOW);
-		delay(200);
+		delay(delta * time_mult);
 		digitalWrite(relePin, HIGH);
-
+	}else{
+		lcd.print("OFF   ");
 	}
 }
 
-void setup() {
-	// set up the LCD's number of columns and rows:
-	lcd.begin(16, 2);
-	pinMode(relePin, OUTPUT);
-	Serial.begin(115200);
-}
 
-int i = 0;
+
+
+
+
+
+
 void loop() {
 	Thermistor_B_Print(analogRead(ThermistorPIN));
 	Digital_B_Print();
@@ -202,8 +202,6 @@ void loop() {
 	printLCD();
 
 	releCommand();
-
-	//lcd.print(i);
-	//lcd.print(" ");
 }
+
 

@@ -1,0 +1,104 @@
+<project name="Sensor">
+    <property file="build.properties" />
+
+	<taskdef name="mytask" classname="ch.arond.ant.arduino.CompileTask" classpath="lib/arduino_extension.jar"/>
+
+
+	<property name="CC" value="${avr.dir}/bin/avr-gcc" />
+	<property name="CXX" value="${avr.dir}/bin/avr-g++" />
+	<property name="OBJCOPY" value="${avr.dir}/bin/avr-objcopy" />
+	<property name="OBJDUMP" value="${avr.dir}/bin/avr-objdump" />
+	<property name="AR" value="${avr.dir}/bin/avr-ar" />
+	<property name="SIZE" value="${avr.dir}/bin/avr-size" />
+	<property name="NM" value="${avr.dir}/bin/avr-nm" />
+	<property name="AVRDUDE" value="${avr.dir}/bin/avrdude" />
+    
+
+	<target name="Build" description="build" >
+        <echo>Build</echo>
+
+		<delete dir="target" />
+		<mkdir dir="target" />
+		
+        <mytask 
+            gcc="${CC}" 
+            gcc_flags="-c -gstabs -Wall -Wstrict-prototypes -std=gnu99 -Os -mmcu=${MCU} -DF_CPU=${F_CPU}"
+            
+            gxx="${CXX}"
+            gxx_flags="-c -Os -mmcu=${MCU} -DF_CPU=${F_CPU}"
+            
+            libPath="${lib.dir}"
+            
+            flags="-Os -mmcu=${MCU} -DF_CPU=${F_CPU}"
+        	sourceFileList="*.cpp"
+            targetPath="./target"
+        
+            ar="${AR}"/>
+		
+		<echo>OBJCOPY</echo>
+        <exec executable="${OBJCOPY}">
+            <arg value="-O" />
+            <arg value="ihex" />
+            <arg value="-R" />
+            <arg value=".eeprom" />
+
+            <arg value="target/main.elf" />
+            <arg value="target/main.hex" />
+
+        </exec>
+    </target>
+	
+	
+	
+
+	<target name="avr-dude" description="dude" >
+		<echo>OBJCOPY</echo>
+        <exec executable="${AVRDUDE}">
+            <arg value="-v" />
+            
+        	<arg value="-c" />
+            <arg value="${dude.programmer}" />
+        	
+            <arg value="-p" />
+        	<arg value="${dude.partno}" />
+
+        	<arg value="-b" />
+        	<arg value="${dude.baudrate}" />
+        		
+        	<arg value="-P" />
+        	<arg value="${dude.port}" />
+        	
+        	<arg value="-U" />
+            <arg value="flash:w:target/main.hex" />
+
+        </exec>
+	</target>
+	
+	
+	<target name="avr-dude-dump" description="avr-dude-dump" >
+		
+		    <mkdir dir="target" />
+		
+	        <echo>dude dump</echo>
+	        <exec executable="${AVRDUDE}">
+	            <arg value="-v" />
+	            
+	            <arg value="-c" />
+	            <arg value="${dude.programmer}" />
+	            
+	            <arg value="-p" />
+	            <arg value="${dude.partno}" />
+
+	            <arg value="-b" />
+	            <arg value="${dude.baudrate}" />
+	                
+	            <arg value="-P" />
+	            <arg value="${dude.port}" />
+	            
+	        	
+	            <arg value="-U" />
+	            <arg value="flash:r:target/dump.hex:r" />
+
+	        </exec>
+	    </target>
+</project>

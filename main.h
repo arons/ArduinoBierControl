@@ -4,8 +4,8 @@
 #define tempSensor_pin 8
 
 
-#define targetTemp 36.0
-#define target_delta 0.05
+#define targetTemp 60.0
+#define target_delta 0.5
 #define time_mult 200
 #define time_pause 1000
 

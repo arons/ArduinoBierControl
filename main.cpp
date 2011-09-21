@@ -41,6 +41,7 @@ void setup() {
 
 void loop() {
 	double delta;
+	double time;
 
 	lcd.clear();
 
@@ -54,22 +55,33 @@ void loop() {
 	lcd.setCursor(0, 1);
 
 	delta = targetTemp - get_temp();
-	delta = delta * time_mult;
 
-	if (delta > target_delta) {
-		lcd.print(" rMs:");
-		lcd.print((int)(delta));
 
-		//start
-		digitalWrite(relePin, LOW);
-		delay(delta);
-		//stop
-		digitalWrite(relePin, HIGH);
+	if(delta > 5.0){
+		digitalWrite(relePin, LOW); //on
+		lcd.print(" ON ");
+		delay(200);
+	}else{
+		time = delta * time_mult;
+
+		if (delta > target_delta) {
+
+
+			lcd.print("rMs:");
+			lcd.print((int)(time));
+
+			//start
+			digitalWrite(relePin, LOW);
+			delay(time);
+			//stop
+			digitalWrite(relePin, HIGH);
+		}
+
+		lcd.print(" stop:");
+		lcd.print( time / (time + time_pause) );
+		delay(time_pause);
 	}
 
-	lcd.print(" stop:");
-	lcd.print( delta / (delta + time_pause) );
-	delay(time_pause);
 
 
 }

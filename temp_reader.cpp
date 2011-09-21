@@ -8,7 +8,6 @@
 OneWire ds(tempSensor_pin); // on pin 8
 
 byte addr[8];
-boolean step1=true;
 double digital_temperature;
 
 double get_temp() {
@@ -53,6 +52,8 @@ void readTemp(){
 	Tc_100 = (6 * TReading) + TReading / 4; // multiply by (100 * 0.0625) or 6.25
 
 	digital_temperature = Tc_100 / 100.0;
+
+
 }
 
 
@@ -61,13 +62,8 @@ void readTemp(){
 
 void interrupt_handler(){
 	//Serial.println("interrupt_handler");
-
-	if(step1){
-		start_conversion();
-	}else{
-		readTemp();
-	}
-	step1 = !step1;
+	readTemp();
+	start_conversion();
 }
 
 
@@ -87,6 +83,8 @@ void temp_read_start() {
 	if (addr[0] != 0x28) {
 		return;
 	}
+
+	start_conversion();
 
 	//Serial.println("start measure");
 	MsTimer2::set(CICLE_MILLIS, interrupt_handler); //

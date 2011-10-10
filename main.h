@@ -7,7 +7,15 @@
 #define targetTemp 60.0
 #define target_delta 0.5
 #define time_mult 200
-#define time_pause 1000
+
+//main loop pause
+#define time_pause 200
+
+//define controlling windo size
+#define WindowSize 5000
+
+//lcd refresh time
+#define lcdRefreshMS 200
 
 
 

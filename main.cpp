@@ -19,7 +19,8 @@ LiquidCrystal lcd(7, 6, 5, 4, 3, 2);
 double Setpoint, Input, Output;
 
 //Specify the links and initial tuning parameters
-PID myPID(&Input, &Output, &Setpoint,2,5,1, DIRECT);
+PID myPID(&Input, &Output, &Setpoint,200,500,100, DIRECT);
+//PID myPID(&Input, &Output, &Setpoint,200,0,0, DIRECT);
 
 unsigned long windowStartTime;
 
@@ -116,8 +117,8 @@ void loop() {
 		lcdDisplay();
 	}
 
-
-	delay(time_pause);
+	if(time_pause > 0)
+		delay(time_pause)	;
 
 
 /*

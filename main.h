@@ -9,7 +9,7 @@
 #define time_mult 200
 
 //main loop pause
-#define time_pause 200
+#define time_pause 0
 
 //define controlling windo size
 #define WindowSize 5000

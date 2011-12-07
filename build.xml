@@ -1,17 +1,19 @@
 <project name="Sensor">
     <property file="build.properties" />
 
-	<taskdef name="mytask" classname="ch.arond.ant.arduino.CompileTask" classpath="lib/arduino_extension.jar"/>
+	<taskdef name="mytask" classname="ch.arons.ant.arduino.CompileTask" classpath="lib/arduino_extension.jar"/>
+	<taskdef name="mytask2" classname="ch.arons.ant.arduino.ExecShell" classpath="lib/arduino_extension.jar" />
 
 
-	<property name="CC" value="${avr.dir}/bin/avr-gcc" />
-	<property name="CXX" value="${avr.dir}/bin/avr-g++" />
-	<property name="OBJCOPY" value="${avr.dir}/bin/avr-objcopy" />
-	<property name="OBJDUMP" value="${avr.dir}/bin/avr-objdump" />
-	<property name="AR" value="${avr.dir}/bin/avr-ar" />
-	<property name="SIZE" value="${avr.dir}/bin/avr-size" />
-	<property name="NM" value="${avr.dir}/bin/avr-nm" />
-	<property name="AVRDUDE" value="${avr.dir}/bin/avrdude" />
+
+	<property name="CC" value="${avr.dir}avr-gcc" />
+	<property name="CXX" value="${avr.dir}avr-g++" />
+	<property name="OBJCOPY" value="${avr.dir}avr-objcopy" />
+	<property name="OBJDUMP" value="${avr.dir}avr-objdump" />
+	<property name="AR" value="${avr.dir}avr-ar" />
+	<property name="SIZE" value="${avr.dir}avr-size" />
+	<property name="NM" value="${avr.dir}/avr-nm" />
+	<property name="AVRDUDE" value="${avrdude.dir}avrdude" />
     
 
 	<target name="Build" description="build" >
@@ -22,15 +24,15 @@
 		
         <mytask 
             gcc="${CC}" 
-            gcc_flags="-c -gstabs -Wall -Wstrict-prototypes -std=gnu99 -Os -mmcu=${MCU} -DF_CPU=${F_CPU}"
+            gcc_flags="-c -g -Os -w -ffunction-sections -fdata-sections -DARDUINO=22 -mmcu=${MCU} -DF_CPU=${F_CPU}"
             
             gxx="${CXX}"
-            gxx_flags="-c -Os -mmcu=${MCU} -DF_CPU=${F_CPU}"
+            gxx_flags="-c -g -Os -w -fno-exceptions -ffunction-sections -fdata-sections -mmcu=${MCU} -DF_CPU=${F_CPU}"
             
             libPath="${lib.dir}"
             
-            flags="-Os -mmcu=${MCU} -DF_CPU=${F_CPU}"
-        	sourceFileList="*.cpp"
+            flags="-Os -Wl,--gc-sections -mmcu=${MCU} -DF_CPU=${F_CPU}"
+        	sourceFileList="main.cpp temp_reader.cpp"
             targetPath="./target"
         
             ar="${AR}"/>
@@ -55,6 +57,9 @@
 		<echo>OBJCOPY</echo>
         <exec executable="${AVRDUDE}">
             <arg value="-v" />
+        	
+        	<arg value="-C" />
+            <arg value="./avrdude/avrdude.conf" />
             
         	<arg value="-c" />
             <arg value="${dude.programmer}" />
@@ -83,6 +88,9 @@
 	        <exec executable="${AVRDUDE}">
 	            <arg value="-v" />
 	            
+	        	<arg value="-C" />
+	        	<arg value="./avrdude/avrdude.conf" />
+	        	
 	            <arg value="-c" />
 	            <arg value="${dude.programmer}" />
 	            
@@ -101,4 +109,89 @@
 
 	        </exec>
 	    </target>
+	
+	
+	
+	
+	<property name="INCLUDES" value="-I./lib/arduino -I./lib/LiquidCrystal -I./lib/MsTimer2 -I./lib/OneWire" />
+	<property name="CFLAGS" value="-c -g -Os -w -ffunction-sections -fdata-sections -mmcu=atmega328p -DF_CPU=16000000L -DARDUINO=22" />
+	
+	<property name="CXXFLAGS" value="-c -g -Os -w  -ffunction-sections -fdata-sections -mmcu=atmega328p -DF_CPU=16000000L -DARDUINO=22" />
+	<property name="MAIN_FLAGS" value="-Os -Wl,--gc-sections -mmcu=atmega328p -DARDUINO=22" />
+	
+
+	<!--***********************************************************************************************************-->
+	<target name="Build test" description="bild project"> 
+		<delete dir="target" />
+		<mkdir dir="target" />
+
+		<echo>Core cc</echo>
+		<mytask2 shellcommand="${CC} ${CFLAGS} ${INCLUDES} ./lib/arduino/WInterrupts.c -o target/WInterrupts.o"  />
+		<mytask2 shellcommand="${AR} rcs target/core.a target/WInterrupts.o" />
+		<mytask2 shellcommand="${CC} ${CFLAGS} ${INCLUDES} ./lib/arduino/pins_arduino.c -o target/pins_arduino.o" />
+		<mytask2 shellcommand="${AR} rcs target/core.a target/pins_arduino.o" />
+		<mytask2 shellcommand="${CC} ${CFLAGS} ${INCLUDES} ./lib/arduino/wiring.c -o target/wiring.o" />
+		<mytask2 shellcommand="${AR} rcs target/core.a target/wiring.o" />
+		<mytask2 shellcommand="${CC} ${CFLAGS} ${INCLUDES} ./lib/arduino/wiring_analog.c -o target/wiring_analog.o" />
+		<mytask2 shellcommand="${AR} rcs target/core.a target/wiring_analog.o" />
+		<mytask2 shellcommand="${CC} ${CFLAGS} ${INCLUDES} ./lib/arduino/wiring_digital.c -o target/wiring_digital.o" />
+		<mytask2 shellcommand="${AR} rcs target/core.a target/wiring_digital.o" />
+		<mytask2 shellcommand="${CC} ${CFLAGS} ${INCLUDES} ./lib/arduino/wiring_pulse.c -o target/wiring_pulse.o" />
+		<mytask2 shellcommand="${AR} rcs target/core.a target/wiring_pulse.o" />
+		<mytask2 shellcommand="${CC} ${CFLAGS} ${INCLUDES} ./lib/arduino/wiring_shift.c -o target/wiring_shift.o" />
+		<mytask2 shellcommand="${AR} rcs target/core.a target/wiring_shift.o" />
+
+		<echo>Core ++</echo>
+		<mytask2 shellcommand="${CXX} ${CXXFLAGS} ${INCLUDES} ./lib/arduino/WMath.cpp -o target/WMath.o" />
+		<mytask2 shellcommand="${AR} rcs target/core.a target/WMath.o" />
+		<mytask2 shellcommand="${CXX} ${CXXFLAGS} ${INCLUDES} ./lib/arduino/Tone.cpp -o target/Tone.o " />
+		<mytask2 shellcommand="${AR} rcs target/core.a target/Tone.o" />
+		<mytask2 shellcommand="${CXX} ${CXXFLAGS} ${INCLUDES} ./lib/arduino/HardwareSerial.cpp -o target/HardwareSerial.o" />
+		<mytask2 shellcommand="${AR} rcs target/core.a target/HardwareSerial.o" />
+		<mytask2 shellcommand="${CXX} ${CXXFLAGS} ${INCLUDES} ./lib/arduino/Print.cpp -o target/Print.o" />
+		<mytask2 shellcommand="${AR} rcs target/core.a target/Print.o" />
+		<mytask2 shellcommand="${CXX} ${CXXFLAGS} ${INCLUDES} ./lib/arduino/WString.cpp  -o target/WString.o" />
+		<mytask2 shellcommand="${AR} rcs target/core.a target/WString.o" />
+
+
+		<echo>Liquid Cristal</echo>
+		<mytask2 shellcommand="${CXX} ${CXXFLAGS} ${INCLUDES} ./lib/LiquidCrystal/LiquidCrystal.cpp -o target/LiquidCrystal.o" />
+		<mytask2 shellcommand="${AR} rcs target/core.a target/LiquidCrystal.o" />
+		
+		<echo>MsTimer2</echo>
+		<mytask2 shellcommand="${CXX} ${CXXFLAGS} ${INCLUDES} ./lib/MsTimer2/MsTimer2.cpp -o target/MsTimer2.o" />
+		<mytask2 shellcommand="${AR} rcs target/core.a target/MsTimer2.o" />
+		
+		<echo>OneWire</echo>
+		<mytask2 shellcommand="${CXX} ${CXXFLAGS} ${INCLUDES} ./lib/OneWire/OneWire.cpp -o target/OneWire.o" />
+		<mytask2 shellcommand="${AR} rcs target/core.a target/OneWire.o" />	
+
+
+		
+		<echo>MAIN</echo>
+		<!--<mytask shellcommand="${CXX} ${INCLUDES} -I. -Os -mmcu=${MCU} -DF_CPU=${F_CPU} -Wl,-Map,target/main.map  ./main.cpp -o target/main.elf   /home/arons/workspace/ArduinoTest/target/core.a  -L/target -lm   " />-->
+		<mytask2 shellcommand="${CXX} ${MAIN_FLAGS} ${INCLUDES}   -o target/main.elf  
+			./main.cpp ./temp_reader.cpp 
+			target/WInterrupts.o
+			target/pins_arduino.o
+			target/wiring.o
+			target/wiring_analog.o
+			target/wiring_digital.o
+			target/wiring_pulse.o
+			target/wiring_shift.o
+			target/Tone.o
+			target/HardwareSerial.o
+			target/Print.o
+			target/WString.o
+			target/LiquidCrystal.o target/OneWire.o target/MsTimer2.o 
+			 -lm " />
+		
+
+		
+
+		<echo>OBJCOPY</echo>
+		<mytask2 shellcommand="${OBJCOPY} -O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 target/main.elf target/main.eep"/>
+		<mytask2 shellcommand="${OBJCOPY} -O ihex -R .eeprom target/main.elf target/main.hex "/>
+
+	</target>
 </project>

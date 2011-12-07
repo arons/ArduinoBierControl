@@ -11,7 +11,7 @@
 //main loop pause
 #define time_pause 0
 
-//define controlling windo size
+//define controlling window size
 #define WindowSize 5000
 
 //lcd refresh time

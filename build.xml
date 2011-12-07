@@ -5,6 +5,7 @@
 
 	<property file="local.properties" />
 	<property file="build.properties" />
+	
 
 
 	<property name="CC" value="${avr.dir}avr-gcc" />
@@ -23,7 +24,7 @@
 	<target name="avr-dude" description="dude">
 		<echo>OBJCOPY</echo>
 		<mytask shellcommand="${AVRDUDE} -v 
-			-C ./avrdude/avrdude.conf
+			-C ${avrdude.dir}avrdude.conf
 			-c ${dude.programmer} 
 			-p ${dude.partno}
 			-b ${dude.baudrate}
@@ -38,7 +39,7 @@
 		<mkdir dir="target" />
 		<echo>dude dump</echo>
 		<mytask shellcommand="${AVRDUDE} -v 
-		            -C ./avrdude/avrdude.conf
+		            -C ${avrdude.dir}avrdude.conf
 		            -c ${dude.programmer} 
 		            -p ${dude.partno}
 		            -b ${dude.baudrate}
@@ -49,13 +50,6 @@
 
 
 
-	<property name="INCLUDES" value="-I./lib/arduino -I./lib/LiquidCrystal -I./lib/MsTimer2 -I./lib/OneWire" />
-
-
-	<property name="CFLAGS" value="-c -g -Os -w -ffunction-sections -fdata-sections -mmcu=atmega328p -DF_CPU=16000000L -DARDUINO=22" />
-
-	<property name="CXXFLAGS" value="-c -g -Os -w  -ffunction-sections -fdata-sections -mmcu=atmega328p -DF_CPU=16000000L -DARDUINO=22" />
-	<property name="MAIN_FLAGS" value="-Os -Wl,--gc-sections -mmcu=atmega328p -DARDUINO=22" />
 
 	<!--***********************************************************************************************************-->
 
@@ -85,16 +79,16 @@
 		<mytask shellcommand="${AR} rcs ${dir.target}/core.a ${dir.core}/wiring_analog.o" />
 		<mytask shellcommand="${CC} ${CFLAGS} ${INCLUDES} ./lib/arduino/wiring_digital.c -o ${dir.core}/wiring_digital.o" />
 		<mytask shellcommand="${AR} rcs ${dir.target}/core.a ${dir.core}/wiring_digital.o" />
-		<mytask shellcommand="${CC} ${CFLAGS} ${INCLUDES} ./lib/arduino/obj/wiring_pulse.c -o ${dir.core}/wiring_pulse.o" />
+		<mytask shellcommand="${CC} ${CFLAGS} ${INCLUDES} ./lib/arduino/wiring_pulse.c -o ${dir.core}/wiring_pulse.o" />
 		<mytask shellcommand="${AR} rcs ${dir.target}/core.a ${dir.core}/wiring_pulse.o" />
 		<mytask shellcommand="${CC} ${CFLAGS} ${INCLUDES} ./lib/arduino/wiring_shift.c -o ${dir.core}/wiring_shift.o" />
 		<mytask shellcommand="${AR} rcs ${dir.target}/core.a ${dir.core}/wiring_shift.o" />
 
 		<echo>Core ++</echo>
 		<mytask shellcommand="${CXX} ${CXXFLAGS} ${INCLUDES} ./lib/arduino/WMath.cpp -o ${dir.core}/WMath.o" />
-		<mytask shellcommand="${AR} rcs ${dir.target}/core.a ${dir.core}/obj/WMath.o" />
+		<mytask shellcommand="${AR} rcs ${dir.target}/core.a ${dir.core}/WMath.o" />
 		<mytask shellcommand="${CXX} ${CXXFLAGS} ${INCLUDES} ./lib/arduino/Tone.cpp -o ${dir.core}/Tone.o " />
-		<mytask shellcommand="${AR} rcs ${dir.target}/core.a ${dir.core}/obj/Tone.o" />
+		<mytask shellcommand="${AR} rcs ${dir.target}/core.a ${dir.core}/Tone.o" />
 		<mytask shellcommand="${CXX} ${CXXFLAGS} ${INCLUDES} ./lib/arduino/HardwareSerial.cpp -o${dir.core}/HardwareSerial.o" />
 		<mytask shellcommand="${AR} rcs ${dir.target}/core.a ${dir.core}/HardwareSerial.o" />
 		<mytask shellcommand="${CXX} ${CXXFLAGS} ${INCLUDES} ./lib/arduino/Print.cpp -o ${dir.core}/Print.o" />
@@ -104,51 +98,19 @@
 	</target>
 
 	<!--***********************************************************************************************************-->
-	<target name="Build test" description="bild project">
-
-		<mkdir dir="target" />
-		<mkdir dir="target/obj" />
-
-		<echo>Core cc</echo>
-		<mytask shellcommand="${CC} ${CFLAGS} ${INCLUDES} ./lib/arduino/WInterrupts.c -o target/obj/WInterrupts.o" />
-		<mytask shellcommand="${AR} rcs target/core.a target/obj/WInterrupts.o" />
-		<mytask shellcommand="${CC} ${CFLAGS} ${INCLUDES} ./lib/arduino/pins_arduino.c -o target/obj/pins_arduino.o" />
-		<mytask shellcommand="${AR} rcs target/core.a target/obj/pins_arduino.o" />
-		<mytask shellcommand="${CC} ${CFLAGS} ${INCLUDES} ./lib/arduino/wiring.c -o target/obj/wiring.o" />
-		<mytask shellcommand="${AR} rcs target/core.a target/obj/wiring.o" />
-		<mytask shellcommand="${CC} ${CFLAGS} ${INCLUDES} ./lib/arduino/wiring_analog.c -o target/obj/wiring_analog.o" />
-		<mytask shellcommand="${AR} rcs target/core.a target/obj/wiring_analog.o" />
-		<mytask shellcommand="${CC} ${CFLAGS} ${INCLUDES} ./lib/arduino/wiring_digital.c -o target/obj/wiring_digital.o" />
-		<mytask shellcommand="${AR} rcs target/core.a target/obj/wiring_digital.o" />
-		<mytask shellcommand="${CC} ${CFLAGS} ${INCLUDES} ./lib/arduino/obj/wiring_pulse.c -o target/obj/wiring_pulse.o" />
-		<mytask shellcommand="${AR} rcs target/core.a target/obj/wiring_pulse.o" />
-		<mytask shellcommand="${CC} ${CFLAGS} ${INCLUDES} ./lib/arduino/wiring_shift.c -o target/obj/wiring_shift.o" />
-		<mytask shellcommand="${AR} rcs target/core.a target/obj/wiring_shift.o" />
-
-		<echo>Core ++</echo>
-		<mytask shellcommand="${CXX} ${CXXFLAGS} ${INCLUDES} ./lib/arduino/WMath.cpp -o target/obj/WMath.o" />
-		<mytask shellcommand="${AR} rcs target/core.a target/obj/WMath.o" />
-		<mytask shellcommand="${CXX} ${CXXFLAGS} ${INCLUDES} ./lib/arduino/Tone.cpp -o target/obj/Tone.o " />
-		<mytask shellcommand="${AR} rcs target/core.a target/obj/Tone.o" />
-		<mytask shellcommand="${CXX} ${CXXFLAGS} ${INCLUDES} ./lib/arduino/HardwareSerial.cpp -o target/HardwareSerial.o" />
-		<mytask shellcommand="${AR} rcs target/core.a target/HardwareSerial.o" />
-		<mytask shellcommand="${CXX} ${CXXFLAGS} ${INCLUDES} ./lib/arduino/Print.cpp -o target/Print.o" />
-		<mytask shellcommand="${AR} rcs target/core.a target/Print.o" />
-		<mytask shellcommand="${CXX} ${CXXFLAGS} ${INCLUDES} ./lib/arduino/WString.cpp  -o target/WString.o" />
-		<mytask shellcommand="${AR} rcs target/core.a target/WString.o" />
-
+	<target name="Build" description="bild project" depends="Build Core">
 
 		<echo>Liquid Cristal</echo>
 		<mytask shellcommand="${CXX} ${CXXFLAGS} ${INCLUDES} ./lib/LiquidCrystal/LiquidCrystal.cpp -o target/LiquidCrystal.o" />
-		<mytask shellcommand="${AR} rcs target/core.a target/LiquidCrystal.o" />
 
 		<echo>MsTimer2</echo>
 		<mytask shellcommand="${CXX} ${CXXFLAGS} ${INCLUDES} ./lib/MsTimer2/MsTimer2.cpp -o target/MsTimer2.o" />
-		<mytask shellcommand="${AR} rcs target/core.a target/MsTimer2.o" />
 
 		<echo>OneWire</echo>
 		<mytask shellcommand="${CXX} ${CXXFLAGS} ${INCLUDES} ./lib/OneWire/OneWire.cpp -o target/OneWire.o" />
-		<mytask shellcommand="${AR} rcs target/core.a target/OneWire.o" />
+		
+		<echo>PID_v1</echo>
+		<mytask shellcommand="${CXX} ${CXXFLAGS} ${INCLUDES} ./lib/PID_v1/PID_v1.cpp -o target/PID_v1.o" />
 
 
 
@@ -156,21 +118,12 @@
 		<!--<mytask shellcommand="${CXX} ${INCLUDES} -I. -Os -mmcu=${MCU} -DF_CPU=${F_CPU} -Wl,-Map,target/main.map  ./main.cpp -o target/main.elf   /home/arons/workspace/ArduinoTest/target/core.a  -L/target -lm   " />-->
 		<mytask shellcommand="${CXX} ${MAIN_FLAGS} ${INCLUDES}   -o target/main.elf  
 			./main.cpp ./temp_reader.cpp 
-			target/WInterrupts.o
-			target/pins_arduino.o
-			target/wiring.o
-			target/wiring_analog.o
-			target/wiring_digital.o
-			target/wiring_pulse.o
-			target/wiring_shift.o
-			target/Tone.o
-			target/HardwareSerial.o
-			target/Print.o
-			target/WString.o
-			target/LiquidCrystal.o target/OneWire.o target/MsTimer2.o 
+			target/core.a
+			target/LiquidCrystal.o 
+			target/OneWire.o 
+			target/MsTimer2.o 
+			target/PID_v1.o
 			 -lm " />
-
-
 
 
 		<echo>OBJCOPY</echo>

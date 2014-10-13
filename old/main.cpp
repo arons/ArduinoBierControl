@@ -2,11 +2,30 @@
 #include <LiquidCrystal.h>
 #include <math.h>
 #include <OneWire.h>
+#include <PID_v1.h>
+#include "main.h"
 
 extern "C" void __cxa_pure_virtual() {
-	while (1)
-		;
+	while (1);
 }
+
+
+// initialize the library with the numbers of the interface pins
+LiquidCrystal lcd(7, 6, 5, 4, 3, 2);
+
+
+
+//Define Variables we'll be connecting to
+double Setpoint, Input, Output;
+
+//Specify the links and initial tuning parameters
+PID myPID(&Input, &Output, &Setpoint,200,500,100, DIRECT);
+//PID myPID(&Input, &Output, &Setpoint,200,0,0, DIRECT);
+
+unsigned long windowStartTime;
+
+
+
 
 int main(void) {
 	init();
@@ -19,181 +38,135 @@ int main(void) {
 	return 0;
 }
 
-// initialize the library with the numbers of the interface pins
-LiquidCrystal lcd(7, 6, 5, 4, 3, 2);
 
-OneWire ds(8); // on pin 10
 
-#define ThermistorPIN 0                 // Analog Pin 0
-//Steinhart-Hart / B parameter equation
-float vcc = 5.00; // only used for display purposes, if used
-// set to the measured Vcc.
-float serialR = 10000; // serialResistance
-//from datasheet
-float B = 3950;
-float R0 = 10000;
-float T0 = 298.15; //Kelvin = 25 Celsius
 
-void Thermistor_B_Print(int RawADC) {
-	float Vx;
-	float Resistance;
-	float Temp;
 
-	Vx = vcc * (RawADC / 1024.0);
-	Resistance = ((5 - Vx) / Vx) * serialR;
-	Temp = 1 / (1 / T0 + (1 / B) * log(Resistance / R0));
-	Temp = Temp - 273.15; // Convert Kelvin to Celsius
-	// Uncomment this line for the function to return Fahrenheit instead.
-	//temp = (Temp * 9.0)/ 5.0 + 32.0;                  // Convert to Fahrenheit
+void setup() {
 
-//  lcd.setCursor(0, 0);
-//  lcd.print("RawADC:");
-//  lcd.print(RawADC);
 
-//  lcd.print(" Vx:");
-//  lcd.print(Vx);
+	// set up the LCD's number of columns and rows:
+	lcd.begin(16, 2);
+	pinMode(relePin, OUTPUT);
+	Serial.begin(115200);
 
-	lcd.setCursor(0, 0);
-	lcd.print("ohm:");
-	lcd.print(Resistance);
 
-	lcd.print(" C:");
-	lcd.print(Temp);
+	windowStartTime = millis();
+	//initialize the variables we're linked to
+	Setpoint = targetTemp;
+	//tell the PID to range between 0 and the full window size
+	myPID.SetOutputLimits(0, WindowSize);
+	//turn the PID on
+	myPID.SetMode(AUTOMATIC);
+
+
+	temp_read_start();
 }
 
-void Digital_B_Print(void) {
-	byte i;
-	byte present = 0;
-	byte data[12];
-	byte addr[8];
 
-	int HighByte, LowByte, TReading, SignBit, Tc_100, Whole, Fract;
+unsigned long lastDisplayMS;
+String releStatus = "";
+void lcdDisplay(){
+
+	lcd.clear();
+
+	lcd.setCursor(0, 0);
+	lcd.print("target:");
+	lcd.print(targetTemp);
+	lcd.print(" T:");
+	lcd.print(Input);
+
+	lcd.setCursor(0, 1);
+	lcd.print("out:");
+    lcd.print(Output);
+	lcd.print(releStatus);
+}
 
 
-	ds.reset_search();
-	if (!ds.search(addr)) {
-		Serial.print("No more addresses.\n");
+void loop() {
 
-		lcd.setCursor(0, 1);
-		lcd.print("No more addresses.");
 
-		return;
+	Input = get_temp();
+	myPID.Compute();
+
+
+	/************************************************
+    * turn the output pin on/off based on pid output
+    ************************************************/
+	unsigned long now = millis();
+	if(now - windowStartTime > WindowSize){
+	    //time to shift the Relay Window
+		windowStartTime += WindowSize;
 	}
 
-	Serial.print("R=");
-	for (i = 0; i < 8; i++) {
-		Serial.print(addr[i], HEX);
-		Serial.print(" ");
+
+
+	if(Output > now - windowStartTime){
+		digitalWrite(relePin, LOW);
+		releStatus = " ON" ;
+	}
+	else{
+		digitalWrite(relePin,HIGH);
+		releStatus = " OFF" ;
 	}
 
-	if (OneWire::crc8(addr, 7) != addr[7]) {
-		Serial.print("CRC is not valid!\n");
-		lcd.setCursor(0, 1);
-		lcd.print("CRC is not valid!");
-		return;
-	}
-	/*
-	 if ( addr[0] != 0x10) {
 
-	 Serial.print("Device is not a DS18S20 family device.\n");
 
-	 lcd.setCursor(0, 1);
-	 lcd.print("Device is not a DS18S20 family device.");
-
-	 ds.reset_search();
-	 return;
-	 }
-	 */
-	if (addr[0] != 0x28) {
-
-		Serial.print("Device is not a DS18B20 family device.\n");
-
-		lcd.setCursor(0, 1);
-		lcd.print("Device is not a DS18B20 family device.");
-
-		return;
+	if(now - lastDisplayMS > lcdRefreshMS){
+		lastDisplayMS = now;
+		lcdDisplay();
 	}
 
-	ds.reset();
-	ds.select(addr);
-	ds.write(0x44, 1); // start conversion, with parasite power on at the end
-
-	delay(1000); // maybe 750ms is enough, maybe not
-	// we might do a ds.depower() here, but the reset will take care of it.
-
-	present = ds.reset();
-	ds.select(addr);
-	ds.write(0xBE); // Read Scratchpad
-
-	Serial.print("P=");
-	Serial.print(present, HEX);
-	Serial.print(" ");
-	for (i = 0; i < 9; i++) { // we need 9 bytes
-		data[i] = ds.read();
-		Serial.print(data[i], HEX);
-		Serial.print(" ");
-	}
-	Serial.print(" CRC=");
-	Serial.print(OneWire::crc8(data, 8), HEX);
-    Serial.println();
+	if(time_pause > 0)
+		delay(time_pause)	;
 
 
+/*
 
+	double delta;
+	double time;
 
-	//convert
-	LowByte = data[0];
-	HighByte = data[1];
-	TReading = (HighByte << 8) + LowByte;
-	SignBit = TReading & 0x8000; // test most sig bit
-	if (SignBit) // negative
-	{
-		TReading = (TReading ^ 0xffff) + 1; // 2's comp
-	}
-	Tc_100 = (6 * TReading) + TReading / 4; // multiply by (100 * 0.0625) or 6.25
+	lcd.clear();
 
-	Whole = Tc_100 / 100; // separate off the whole and fractional portions
-	Fract = Tc_100 % 100;
+	lcd.setCursor(0, 0);
+	lcd.print("target:");
+	lcd.print(targetTemp);
+	lcd.print(" T:");
+	lcd.print(get_temp());
 
 
 	lcd.setCursor(0, 1);
-	Serial.print("digital:");
+
+	delta = targetTemp - get_temp();
 
 
-	if (SignBit) // If its negative
-	{
-		Serial.print("-");
-		lcd.print("-");
+	if(delta > 5.0){
+		digitalWrite(relePin, LOW); //on
+		lcd.print(" ON ");
+		delay(200);
+	}else{
+		time = delta * time_mult;
+
+		if (delta > target_delta) {
+
+
+			lcd.print("rMs:");
+			lcd.print((int)(time));
+
+			//start
+			digitalWrite(relePin, LOW);
+			delay(time);
+			//stop
+			digitalWrite(relePin, HIGH);
+		}
+
+		lcd.print(" stop:");
+		lcd.print( time / (time + time_pause) );
+		delay(time_pause);
 	}
-	Serial.print(Whole);
-	lcd.print(Whole);
-
-	Serial.print(".");
-	lcd.print(".");
+*/
 
 
-	if (Fract < 10) {
-		Serial.print("0");
-		lcd.print("0");
-	}
-	Serial.print(Fract);
-	lcd.print(Fract);
-
-	Serial.print("\n");
 }
 
-void setup() {
-	// set up the LCD's number of columns and rows:
-	lcd.begin(16, 2);
-	Serial.begin(115200);
-}
-
-int i = 0;
-void loop() {
-	Thermistor_B_Print(analogRead(ThermistorPIN));
-	Digital_B_Print();
-	delay(2000);
-
-	//lcd.print(i);
-	//lcd.print(" ");
-}
 

@@ -1,4 +1,4 @@
-target/main.o: main.ino \
+target/temp_reader.o: temp_reader.cpp lib/OneWire/OneWire.h \
   /home/arons/prog/arduino-1.0.5/hardware/arduino/cores/arduino/Arduino.h \
   /home/arons/prog/arduino-1.0.5/hardware/arduino/cores/arduino/binary.h \
   /home/arons/prog/arduino-1.0.5/hardware/arduino/cores/arduino/WCharacter.h \
@@ -9,8 +9,9 @@ target/main.o: main.ino \
   /home/arons/prog/arduino-1.0.5/hardware/arduino/cores/arduino/Printable.h \
   /home/arons/prog/arduino-1.0.5/hardware/arduino/cores/arduino/new.h \
   /home/arons/prog/arduino-1.0.5/hardware/arduino/variants/standard/pins_arduino.h \
-  /home/arons/prog/arduino-1.0.5/hardware/arduino/cores/arduino/Arduino.h \
-  main.h
+  lib/MsTimer2/MsTimer2.h main.h
+
+lib/OneWire/OneWire.h:
 
 /home/arons/prog/arduino-1.0.5/hardware/arduino/cores/arduino/Arduino.h:
 
@@ -32,6 +33,6 @@ target/main.o: main.ino \
 
 /home/arons/prog/arduino-1.0.5/hardware/arduino/variants/standard/pins_arduino.h:
 
-/home/arons/prog/arduino-1.0.5/hardware/arduino/cores/arduino/Arduino.h:
+lib/MsTimer2/MsTimer2.h:
 
 main.h:
